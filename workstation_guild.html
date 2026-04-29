@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workstation Gamified Quick Start</title>
+  <style>
+    :root {
+      --bg-main: #F5F7FA;
+      --bg-card: #FFFFFF;
+      --accent: #A46CEC;
+      --accent-hover: #8b55d1;
+      --text-main: #555555;
+      --text-head: #111111;
+      --border: #E2E8F0;
+      --success: #00C853;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      line-height: 1.6;
+    }
+
+    .container {
+      display: flex;
+      max-width: 1100px;
+      width: 100%;
+      gap: 40px;
+    }
+
+    /* --- Sidebar Progress --- */
+    .sidebar {
+      width: 250px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 40px;
+      height: max-content;
+    }
+    .sidebar h2 {
+      color: var(--text-head);
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .progress-bar-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      height: 8px;
+      width: 100%;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .progress-bar-fill {
+      background: var(--accent);
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 10px var(--accent);
+    }
+    .progress-text {
+      font-size: 0.9rem;
+      color: var(--text-main);
+      font-weight: bold;
+      margin-bottom: 30px;
+      display: block;
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 10px;
+      bottom: 10px;
+      width: 2px;
+      background: var(--border);
+      z-index: 0;
+    }
+    .timeline-node {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      position: relative;
+      z-index: 1;
+      cursor: pointer;
+    }
+    .timeline-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    .timeline-node.completed .timeline-dot {
+      background: var(--success);
+      border-color: var(--success);
+      box-shadow: 0 0 10px var(--success);
+    }
+    .timeline-node.completed .timeline-dot::after {
+      content: '✓';
+      color: #000;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .timeline-node.active .timeline-dot {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+    .timeline-label {
+      color: var(--text-main);
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.3s;
+    }
+    .timeline-node.active .timeline-label,
+    .timeline-node.completed .timeline-label {
+      color: var(--text-head);
+    }
+
+    /* --- Accordion Main Content --- */
+    .main-content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .accordion-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .accordion-section:hover, .accordion-section.active {
+      border-color: var(--accent);
+    }
+    .accordion-section.active {
+      box-shadow: 0 0 20px rgba(157, 91, 255, 0.15);
+    }
+
+    .accordion-header {
+      padding: 20px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      background: #F8F9FA;
+    }
+    .accordion-title {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--text-head);
+    }
+    .time-estimate {
+      font-size: 0.8rem;
+      background: var(--border);
+      color: var(--text-head);
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .accordion-body {
+      padding: 0 25px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.4s ease;
+    }
+    .accordion-section.active .accordion-body {
+      padding: 20px 25px;
+      max-height: 10000px;
+    }
+
+    /* --- Task Styles --- */
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      padding: 15px;
+      background: #FAFAFA;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .task-item:hover {
+      background: #FFFFFF;
+      border-color: var(--border);
+    }
+    .task-item.checked {
+      background: rgba(0, 230, 118, 0.05);
+      border-color: rgba(0, 230, 118, 0.3);
+    }
+    
+    /* Custom Checkbox (Toggle Button) */
+    .custom-checkbox {
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .custom-checkbox:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+    .custom-checkbox:checked::after {
+      content: '✓';
+      position: absolute;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .task-content {
+      flex-grow: 1;
+    }
+    .task-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-head);
+      display: block;
+      margin-bottom: 5px;
+    }
+    .task-details {
+      font-size: 0.95rem;
+      color: var(--text-main);
+    }
+    .task-item.checked .task-text {
+      color: var(--text-main);
+      text-decoration: line-through;
+    }
+
+    .screenshot {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin-top: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    /* --- Pro Tips & Buttons --- */
+    .pro-tip {
+      background: rgba(157, 91, 255, 0.1);
+      border-left: 4px solid var(--accent);
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    .pro-tip strong {
+      color: var(--text-head);
+    }
+    
+    .action-btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    .action-btn:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 0 15px var(--accent);
+    }
+
+    /* --- Modal --- */
+    #achievement-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    #achievement-modal.show {
+      display: flex;
+      opacity: 1;
+    }
+    .modal-content {
+      background: var(--bg-card);
+      padding: 40px;
+      border-radius: 16px;
+      text-align: center;
+      border: 1px solid var(--accent);
+      box-shadow: 0 0 30px rgba(157, 91, 255, 0.4);
+      max-width: 400px;
+      position: relative;
+      z-index: 1001;
+    }
+    .modal-content h2 { margin: 0 0 15px 0; color: var(--text-head); }
+    .modal-content p { color: var(--text-main); margin-bottom: 25px; }
+    
+    #confetti {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+    /* Style for small icons that should be next to text */
+    .inline-image {
+      display: inline-block;
+      height: 1.5em;
+      width: auto;
+      margin: 0 4px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Sidebar / Timeline -->
+    <div class="sidebar">
+      <h2>Your Progress</h2>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progress-bar"></div>
+      </div>
+      <span class="progress-text" id="progress-text">0 / 13 Tasks Completed</span>
+
+      <div class="timeline">
+        <div class="timeline-node active" data-target="sec-workstation">
+          <div class="timeline-dot"></div>
+          <span class="timeline-label">1. Using Workstation</span>
+        </div>
+        <div class="timeline-node" data-target="sec-image">
+          <div class="timeline-dot"></div>
+          <span class="timeline-label">2. Image Quality & FPS</span>
+        </div>
+        <div class="timeline-node" data-target="sec-usb">
+          <div class="timeline-dot"></div>
+          <span class="timeline-label">3. USB Devices</span>
+        </div>
+        <div class="timeline-node" data-target="sec-sharesync">
+          <div class="timeline-dot"></div>
+          <span class="timeline-label">4. ShareSync Files</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Accordion -->
+    <div class="main-content">
+      
+      <!-- Section 1 -->
+      <div class="accordion-section active" id="sec-workstation">
+        <div class="accordion-header">
+          <div class="accordion-title">🚀 Using Workstation</div>
+          <div class="time-estimate">⏱ ~3 min</div>
+        </div>
+        <div class="accordion-body">
+          <div class="task-list" data-section="sec-workstation">
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="uw-1">
+              <div class="task-content">
+                <span class="task-text">Explore the right-side TGX Controls</span>
+                <div class="task-details">
+                  Hover on the top centre of the window to reveal the TGX control panel. On the right side of the control panel you get:
+                  <ul>
+                    <li><strong>Minimize</strong> hides the window from view without closing it.</li>
+                    <li><strong>Maximize</strong> expands the window to fill the screen.</li>
+                    <li><strong>Restore</strong> brings your remote desktop into a floating window.</li>
+                    <li><strong>Full-Screen</strong> to return your remote desktop to full screen mode on your primary monitor.</li>
+                    <li><strong>Multi-Screen</strong> to return your remote desktop to full screen mode across multiple displays.</li>
+                    <li><strong>Disconnect</strong> to disconnect from your remote workstation without shutting down.</li>
+                  </ul>
+                  <img src="images/wks_controlpanel.jpg" alt="Panel Instructions" class="screenshot" style="max-width: 100%;" />
+                </div>
+              </div>
+            </label>
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="uw-2">
+              <div class="task-content">
+                <span class="task-text">Learn the Keyboard Shortcuts</span>
+                <div class="task-details">
+                  Switch between window mode states using:
+                  <div style="display: flex; gap: 60px; margin-top: 10px;">
+                    <div>
+                      <strong>For Windows and Linux:</strong>
+                      <ul>
+                        <li><strong>Minimize</strong> = (Ctrl + Alt + N)</li>
+                        <li><strong>Maximize</strong> = (Ctrl + Alt + M)</li>
+                        <li><strong>Restore</strong> = (Ctrl + Alt + W)</li>
+                        <li><strong>Full-Screen</strong> = (Ctrl + Alt + S)</li>
+                        <li><strong>Multi-Screen</strong> = (Ctrl + Alt + D)</li>
+                        <li><strong>Disconnect</strong> = (Ctrl + Alt + X)</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <strong>For Mac:</strong>
+                      <ul>
+                        <li><strong>Minimize</strong> = (⌘ + ⌥ + N)</li>
+                        <li><strong>Maximize</strong> = (⌘ + ⌥ + M)</li>
+                        <li><strong>Restore</strong> = (⌘ + ⌥ + W)</li>
+                        <li><strong>Full-Screen</strong> = (⌘ + ⌥ + S)</li>
+                        <li><strong>Multi-Screen</strong> = (⌘ + ⌥ + B)</li>
+                        <li><strong>Disconnect</strong> = (⌘ + ⌥ + X)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </label>
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="uw-3">
+              <div class="task-content">
+                <span class="task-text">Explore the left-side TGX Controls</span>
+                <div class="task-details">
+                  On the left side of the control panel, you get options such as:
+                  <ul>
+                    <li><strong>Pin/Unpin</strong> to pin/unpin the control panel on the window</li>
+                    <li><strong>TGX/More Controls</strong> to open a dropdown menu consisting of:
+                      <ul>
+                        <li>Volume control bar</li>
+                        <li><strong>Ctrl+Alt+Del</strong> shortcut to reach windows security screen.</li>
+                        <li><strong>Input Controls</strong> which contains menu related to the input features.</li>
+                      </ul>
+                    </li>
+                  </ul>
+                  <img src="images/wks_control.gif" alt="TGX Controls" class="screenshot" />
+                  <img src="images/wks_tgxdropdown.png" alt="tgxdropdown" class="screenshot" style="max-width: 55%;" />
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2 -->
+      <div class="accordion-section" id="sec-image">
+        <div class="accordion-header">
+          <div class="accordion-title">📺 Image Quality & FPS</div>
+          <div class="time-estimate">⏱ ~2 min</div>
+        </div>
+        <div class="accordion-body">
+          <div class="task-list" data-section="sec-image">
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="iq-1">
+              <div class="task-content">
+                <span class="task-text">Access the Performance Sliders</span>
+                <div class="task-details">
+                  Click the blue <strong>Overlay</strong> displaying bandwidth stats to access sliders.<br>
+                  <img src="images/wks_band.png" alt="New Info" class="screenshot" style="max-width: 60%;" />
+                  Adjust <strong>Frame Rate</strong>, <strong>Image Quality (IQ)</strong>, and <strong>Bandwidth Limiter</strong> for better performance, balance visual quality and responsiveness based on network speed.
+                  <img src="images/wks_slidebars.png" alt="slidebars" class="screenshot" style="max-width: 60%;" />
+                </div>
+              </div>
+            </label>
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="iq-2">
+              <div class="task-content">
+                <span class="task-text">Try the Minimap tool</span>
+                <div class="task-details">
+                  Use the <strong>Minimap</strong><img src="images/wks_minimap.png" alt="minimapicon" class="inline-image"/> to open a mini window on the top left corner to use the workstation after restoring the window from the full-screen size.<br>
+                  <img src="images/wks_minimap_1.png" alt="minimap" class="screenshot" style="max-width: 35%;" />
+                </div>
+              </div>
+            </label>
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="iq-3">
+              <div class="task-content">
+                <span class="task-text">Toggle Resolution scaling</span>
+                <div class="task-details">
+                  Toggle your window mode between full scale resolution and scaled to-fit using <strong>Toggle Resolution</strong><img src="images/wks_toggleresolution.png" alt="Toggle Resolution Icon" class="inline-image"/> button.<br>
+                  <img src="images/wks_resolution.png" alt="toggle_resolution" class="screenshot" style="max-width: 70%;" />
+                </div>
+              </div>
+            </label>
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="iq-4">
+              <div class="task-content">
+                <span class="task-text">Enable 4:4:4 color mode</span>
+                <div class="task-details">
+                  Use the <strong>Toggle Color</strong><img src="images/wks_colorpalette.png" alt="color palette" class="inline-image"/> icon to enable full screen 4:4:4 uncompressed color for true-to-source accuracy in color critical workflows. Full color may reduce performance and increase bandwidth.
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3 -->
+      <div class="accordion-section" id="sec-usb">
+        <div class="accordion-header">
+          <div class="accordion-title">🔌 Use Your USB Devices</div>
+          <div class="time-estimate">⏱ ~1 min</div>
+        </div>
+        <div class="accordion-body">
+          <div class="task-list" data-section="sec-usb">
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="usb-1">
+              <div class="task-content">
+                <span class="task-text">Connect a USB device</span>
+                <div class="task-details">
+                  Connect USB devices via the TGX menu.
+                  <ul>
+                    <li>Select the desired device.</li>
+                    <li>Click <strong>Connect</strong> – yellow while connecting, green once done.</li>
+                    <li>Note: The device becomes unavailable locally while connected.</li>
+                    <li>To disconnect, click <strong>Disconnect</strong>.</li>
+                  </ul>
+                  <img src="images/wks_USB.png" alt="USB Instruction" class="screenshot" style="max-width: 100%;" />
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4 -->
+      <div class="accordion-section" id="sec-sharesync">
+        <div class="accordion-header">
+          <div class="accordion-title">📁 ShareSync Files</div>
+          <div class="time-estimate">⏱ ~4 min</div>
+        </div>
+        <div class="accordion-body">
+          <div class="pro-tip">
+            <strong>💡 Storage Pro-Tip:</strong><br/>
+            • <strong>ShareSync:</strong> Use for all projects (synced across all devices).<br/>
+            • <strong>C: Drive:</strong> Persistent, but only exists on this specific workstation.<br/>
+            • <strong>Z: Drive:</strong> Ultra-fast NVMe Scratch disk. <em>Warning: Wiped clean on shutdown!</em>
+          </div>
+          <div class="task-list" data-section="sec-sharesync">
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="ss-1">
+              <div class="task-content">
+                <span class="task-text">Log in to ShareSync</span>
+                <div class="task-details">
+                  Wait for configuration, then log in inside the browser.<br>
+                  <img src="images/wks_sharesync_login.png" alt="ShareSync Login" class="screenshot" style="max-width: 80%;" />
+                </div>
+              </div>
+            </label>
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="ss-2">
+              <div class="task-content">
+                <span class="task-text">Explore Your Personal Space</span>
+                <div class="task-details">
+                  After logging in, Open Windows File Explorer on your taskbar and browse to "Personal" on the sidebar with Spark logo and access all your files.<br>
+                  <img src="images/wks_personal.png" alt="ShareSync Personal" class="screenshot" style="max-width: 80%;" />
+                </div>
+              </div>
+            </label>
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="ss-3">
+              <div class="task-content">
+                <span class="task-text">Check out Projects</span>
+                <div class="task-details">The "Projects" section is where collaborative work happens.</div>
+              </div>
+            </label>
+            <label class="task-item">
+              <input type="checkbox" class="custom-checkbox task-checkbox" data-task-id="ss-4">
+              <div class="task-content">
+                <span class="task-text">Share Your Files</span>
+                <div class="task-details">Use the "Shares" section to securely share files or generate public links.</div>
+              </div>
+            </label>
+          </div>
+          <div style="text-align: center; margin-top: 25px;">
+            <a href="https://app.sparkcloud.studio/sharesync" target="_blank" class="action-btn">Open ShareSync Dashboard</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Achievement Modal -->
+  <canvas id="confetti"></canvas>
+  <div id="achievement-modal">
+    <div class="modal-content">
+      <h2>🏆 Workstation Master!</h2>
+      <p>You've successfully completed the setup guide. You are ready to create amazing things.</p>
+      <button class="action-btn" onclick="closeModal()">Start Creating</button>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL_TASKS = 12;
+    let checkedTasks = new Set();
+    let hasShownModal = false;
+
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const modal = document.getElementById('achievement-modal');
+    
+    // Setup Accordion Logic
+    const headers = document.querySelectorAll('.accordion-header');
+    headers.forEach(header => {
+      header.addEventListener('click', () => {
+        const section = header.parentElement;
+        // Toggle active state
+        const isActive = section.classList.contains('active');
+        // Close all
+        document.querySelectorAll('.accordion-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.timeline-node').forEach(n => n.classList.remove('active'));
+        
+        if (!isActive) {
+          section.classList.add('active');
+          document.querySelector(`.timeline-node[data-target="${section.id}"]`).classList.add('active');
+        }
+      });
+    });
+
+    // Setup Timeline click navigation
+    const nodes = document.querySelectorAll('.timeline-node');
+    nodes.forEach(node => {
+      node.addEventListener('click', () => {
+        const targetId = node.getAttribute('data-target');
+        document.querySelectorAll('.accordion-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.timeline-node').forEach(n => n.classList.remove('active'));
+        
+        document.getElementById(targetId).classList.add('active');
+        node.classList.add('active');
+      });
+    });
+
+    // Setup Checkbox Logic
+    const checkboxes = document.querySelectorAll('.task-checkbox');
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const id = e.target.getAttribute('data-task-id');
+        const taskItem = e.target.closest('.task-item');
+        
+        if (e.target.checked) {
+          checkedTasks.add(id);
+          taskItem.classList.add('checked');
+        } else {
+          checkedTasks.delete(id);
+          taskItem.classList.remove('checked');
+        }
+        updateProgress();
+      });
+    });
+
+    function updateProgress() {
+      const completed = checkedTasks.size;
+      const percent = (completed / TOTAL_TASKS) * 100;
+      
+      progressBar.style.width = percent + '%';
+      progressText.innerText = `${completed} / ${TOTAL_TASKS} Tasks Completed`;
+
+      // Check section completion
+      document.querySelectorAll('.accordion-section').forEach(section => {
+        const sectionId = section.id;
+        const totalSectionTasks = section.querySelectorAll('.task-checkbox').length;
+        const checkedSectionTasks = section.querySelectorAll('.task-checkbox:checked').length;
+        
+        const node = document.querySelector(`.timeline-node[data-target="${sectionId}"]`);
+        if (totalSectionTasks > 0 && totalSectionTasks === checkedSectionTasks) {
+          node.classList.add('completed');
+        } else {
+          node.classList.remove('completed');
+        }
+      });
+
+      if (completed === TOTAL_TASKS && !hasShownModal) {
+        showAchievement();
+      }
+    }
+
+    // Modal & Confetti Logic
+    function showAchievement() {
+      hasShownModal = true;
+      modal.classList.add('show');
+      fireConfetti();
+    }
+
+    function closeModal() {
+      modal.classList.remove('show');
+    }
+
+    function fireConfetti() {
+      const canvas = document.getElementById('confetti');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      const pieces = [];
+      const colors = ['#9D5BFF', '#00E676', '#FFC107', '#2196F3', '#E91E63'];
+      
+      for(let i=0; i<100; i++) {
+        pieces.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          w: Math.random() * 10 + 5,
+          h: Math.random() * 10 + 5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          speedY: Math.random() * 3 + 2,
+          speedX: Math.random() * 2 - 1,
+          rot: Math.random() * 360,
+          rotSpeed: Math.random() * 5 - 2.5
+        });
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let active = false;
+        
+        pieces.forEach(p => {
+          p.y += p.speedY;
+          p.x += p.speedX;
+          p.rot += p.rotSpeed;
+          
+          if (p.y < canvas.height) active = true;
+          
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot * Math.PI / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+          ctx.restore();
+        });
+        
+        if(active && modal.classList.contains('show')) {
+          requestAnimationFrame(render);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      render();
+    }
+  </script>
+</body>
+</html>
